@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Générateur d'exercice IPv4</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #dc2626;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --row-even: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 12px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .window {
+            width: 100%;
+            max-width: 768px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title-bar {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .pwa-install-btn {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .pwa-install-btn:hover {
+            background-color: #059669;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background-color: var(--bg-color);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.15s ease;
+            font-size: 0.9rem;
+            flex: 1 1 auto;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger);
+        }
+
+        .select-questions {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: #ffffff;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: #ffffff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .timer-box {
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-width: 35px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .timer-box.warning {
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .exercise-area {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: minmax(130px, 1.8fr) minmax(50px, 0.7fr) repeat(3, minmax(45px, 1fr));
+            gap: 8px;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px;
+            background-color: var(--bg-color);
+            border-radius: 6px 6px 0 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .rows-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-height: 50px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: minmax(130px, 1.8fr) minmax(50px, 0.7fr) repeat(3, minmax(45px, 1fr));
+            gap: 8px;
+            align-items: center;
+            padding: 6px 8px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .row:nth-child(even) {
+            background-color: var(--row-even);
+        }
+
+        .row input[type="text"] {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: var(--text-main);
+            font-family: monospace;
+            font-size: 0.9rem;
+            width: 100%;
+            -webkit-appearance: none;
+            opacity: 1;
+        }
+
+        .row input[type="text"]::-webkit-input-placeholder {
+            color: #94a3b8;
+            opacity: 1;
+        }
+
+        .row input[type="text"].snm-input {
+            text-align: center;
+        }
+
+        .row input[type="text"].error {
+            background-color: var(--danger) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: bold;
+            border-color: #b91c1c;
+        }
+
+        .radio-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .row input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .score-board {
+            margin-top: 16px;
+            padding: 14px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .score-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 4px;
+            }
+            .window {
+                padding: 10px;
+                border-radius: 8px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .control-group {
+                justify-content: space-between;
+            }
+            .table-header, .row {
+                grid-template-columns: minmax(115px, 1.8fr) minmax(40px, 0.6fr) repeat(3, minmax(38px, 1fr));
+                gap: 4px;
+                padding: 4px;
+            }
+            .row input[type="text"] {
+                font-size: 0.8rem;
+                padding: 4px 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="window">
+    <div class="header-bar">
+        <h1 class="title-bar">Générateur d'exercice IPv4</h1>
+        <button id="pwaInstallBtn" class="pwa-install-btn">
+            📲 Installer l'application
+        </button>
+    </div>
+
+    <div class="main-container">
+        <div class="controls">
+            <div class="control-group" style="flex: 1 1 100%;">
+                <label for="questionCount" style="font-weight: 600; font-size: 0.9rem;">Questions :</label>
+                <select id="questionCount" class="select-questions">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="19" selected>19</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                </select>
+                <button class="btn btn-primary" id="btnGenerate" type="button">Générer l'IP</button>
+                <button class="btn btn-danger" id="btnReset" type="button">Reset / Stop</button>
+                <button class="btn btn-primary" id="btnVerify" type="button" style="background-color: #059669;">Vérifier</button>
+            </div>
+            <div class="control-group" style="justify-content: flex-end; width: 100%;">
+                <div class="timer-container">
+                    ⏱️ Temps : <span class="timer-box" id="timerDisplay">0s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="exercise-area">
+            <div class="table-header">
+                <span>Adresse IP</span>
+                <span>SNM</span>
+                <span>Net</span>
+                <span>BC</span>
+                <span>Host</span>
+            </div>
+
+            <div class="rows-container" id="rowsContainer">
+                <!-- Lignes générées dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <div class="score-board" id="scoreBoard" style="display: none;">
+        <div class="score-title">Résultats : <span id="scoreText">0 / 0</span></div>
+        <div id="timeStatus" style="font-size: 0.9rem; color: var(--text-muted);"></div>
+    </div>
+</div>
+
+<!-- DEBUG : affiche les erreurs JS à l'écran (script séparé en ES5 pour capter aussi les erreurs de syntaxe du script principal) -->
+<script>
+    window.onerror = function (msg, src, line) {
+        var box = document.createElement('pre');
+        box.style.cssText = 'background:#fee;color:#900;padding:8px;font-size:12px;white-space:pre-wrap;margin:0 0 8px 0;';
+        box.textContent = 'Erreur JS : ' + msg + ' (ligne ' + line + ')';
+        document.body.insertBefore(box, document.body.firstChild);
+    };
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const MAX_SEC_PER_QUESTION = 20;
+
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let deferredPrompt = null;
+
+        const rowsContainer = document.getElementById('rowsContainer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const btnReset = document.getElementById('btnReset');
+        const btnVerify = document.getElementById('btnVerify');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const scoreText = document.getElementById('scoreText');
+        const timeStatus = document.getElementById('timeStatus');
+        const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+        const questionCountSelect = document.getElementById('questionCount');
+
+        // === PWA INSTALLATION LOGIC ===
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaInstallBtn.style.display = 'inline-flex';
+        });
+
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                pwaInstallBtn.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            pwaInstallBtn.style.display = 'none';
+            deferredPrompt = null;
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW enregistré !', reg.scope))
+                    .catch(err => console.error('Erreur SW:', err));
+            });
+        }
+
+        // === APPLICATION EXERCISE LOGIC ===
+        function getQuestionCount() {
+            return parseInt(questionCountSelect.value, 10) || 19;
+        }
+
+        function initGrid() {
+            rowsContainer.innerHTML = '';
+            const rowCount = getQuestionCount();
+            
+            for (let i = 0; i < rowCount; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                row.innerHTML = `
+                    <input type="text" class="ip-input" id="ip_${i}" readonly placeholder="192.168.1.1">
+                    <input type="text" class="snm-input" id="snm_${i}" readonly placeholder="/24">
+                    <div class="radio-cell"><input type="radio" name="type_${i}" value="Net" aria-label="Net"></div>
+                    <div class="radio-cell"><input type="radio" name="type_${i}" value="BC" aria-label="BC"></div>
+                    <div class="radio-cell"><input type="radio" name="type_${i}" value="Host" aria-label="Host"></div>
+                `;
+                rowsContainer.appendChild(row);
+            }
+        }
+
+        function calculateIpType(ipStr, cidr) {
+            const octets = ipStr.split('.').map(Number);
+            const ipNum = ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0;
+            const mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0;
+            const netNum = (ipNum & mask) >>> 0;
+            const bcNum = (netNum | (~mask)) >>> 0;
+
+            if (ipNum === netNum) return 'Net';
+            if (ipNum === bcNum) return 'BC';
+            return 'Host';
+        }
+
+        function numberToIp(ipNum) {
+            return [
+                (ipNum >>> 24) & 255,
+                (ipNum >>> 16) & 255,
+                (ipNum >>> 8) & 255,
+                ipNum & 255
+            ].join('.');
+        }
+
+        function generateIPForType(targetType, cidr) {
+            const mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0;
+            
+            const rand0 = Math.floor(Math.random() * 223) + 1;
+            const rand1 = Math.floor(Math.random() * 256);
+            const rand2 = Math.floor(Math.random() * 256);
+            const rand3 = Math.floor(Math.random() * 256);
+            
+            const randomIpNum = ((rand0 << 24) | (rand1 << 16) | (rand2 << 8) | rand3) >>> 0;
+            const netNum = (randomIpNum & mask) >>> 0;
+            const bcNum = (netNum | (~mask)) >>> 0;
+
+            if (targetType === 'Net') {
+                return numberToIp(netNum);
+            } else if (targetType === 'BC') {
+                return numberToIp(bcNum);
+            } else {
+                const totalHosts = (bcNum - netNum) - 1;
+                if (totalHosts <= 0) {
+                    return numberToIp(netNum);
+                }
+                const offset = Math.floor(Math.random() * totalHosts) + 1;
+                return numberToIp((netNum + offset) >>> 0);
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            secondsElapsed = 0;
+            timerDisplay.textContent = '0s';
+            timerDisplay.classList.remove('warning');
+            
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                timerDisplay.textContent = `${secondsElapsed}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function generateExercises() {
+            initGrid();
+            clearAll(false);
+
+            const rows = rowsContainer.querySelectorAll('.row');
+            const rowCount = rows.length;
+            const types = ['Net', 'BC', 'Host'];
+            let typeList = [];
+
+            for (let i = 0; i < rowCount; i++) {
+                typeList.push(types[i % 3]);
+            }
+
+            for (let i = typeList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [typeList[i], typeList[j]] = [typeList[j], typeList[i]];
+            }
+
+            for (let i = 0; i < rowCount; i++) {
+                const cidr = Math.floor(Math.random() * 23) + 8;
+                const targetType = typeList[i];
+                const ip = generateIPForType(targetType, cidr);
+                
+                const ipInput = document.getElementById(`ip_${i}`);
+                const snmInput = document.getElementById(`snm_${i}`);
+                if (ipInput) ipInput.value = ip;
+                if (snmInput) snmInput.value = '/' + cidr;
+            }
+            startTimer();
+        }
+
+        function clearAll(resetTimer = true) {
+            if (resetTimer) {
+                stopTimer();
+                secondsElapsed = 0;
+                timerDisplay.textContent = '0s';
+                timerDisplay.classList.remove('warning');
+            }
+            
+            scoreBoard.style.display = 'none';
+            const rows = rowsContainer.querySelectorAll('.row');
+
+            rows.forEach((row, i) => {
+                const ipInput = document.getElementById(`ip_${i}`);
+                const snmInput = document.getElementById(`snm_${i}`);
+                
+                if (ipInput) {
+                    ipInput.value = '';
+                    ipInput.classList.remove('error');
+                }
+                if (snmInput) {
+                    snmInput.value = '';
+                }
+
+                const radios = document.getElementsByName(`type_${i}`);
+                radios.forEach(r => r.checked = false);
+            });
+        }
+
+        function verifyAnswers() {
+            let correctCount = 0;
+            let totalQuestions = 0;
+            
+            const rows = rowsContainer.querySelectorAll('.row');
+
+            rows.forEach((row, i) => {
+                const ipInput = document.getElementById(`ip_${i}`);
+                const snmInput = document.getElementById(`snm_${i}`);
+                
+                if (!ipInput || !ipInput.value) return;
+
+                totalQuestions++;
+                const ip = ipInput.value;
+                const cidr = parseInt(snmInput.value.replace('/', ''), 10);
+                const expectedType = calculateIpType(ip, cidr);
+
+                const selectedRadio = document.querySelector(`input[name="type_${i}"]:checked`);
+                const userChoice = selectedRadio ? selectedRadio.value : null;
+
+                if (userChoice === expectedType) {
+                    correctCount++;
+                    ipInput.classList.remove('error');
+                } else {
+                    ipInput.classList.add('error');
+                }
+            });
+
+            if (totalQuestions === 0) return;
+
+            stopTimer();
+
+            const maxAllowedTime = totalQuestions * MAX_SEC_PER_QUESTION;
+            const isTimeOk = secondsElapsed <= maxAllowedTime;
+
+            if (!isTimeOk) {
+                timerDisplay.classList.add('warning');
+            }
+
+            scoreText.textContent = `${correctCount} / ${totalQuestions}`;
+            timeStatus.innerHTML = `Temps réalisé : <strong>${secondsElapsed}s</strong> (Limite conseillée : ${maxAllowedTime}s) — ` +
+                (isTimeOk ? `<span style="color:#059669; font-weight: bold;">Chrono OK !</span>` : `<span style="color:#dc2626; font-weight: bold;">Temps dépassé (>20s/réponse)</span>`);
+            
+            scoreBoard.style.display = 'block';
+        }
+
+        // Événements sécurisés pour iOS (Click + Touch)
+        function bindAction(element, handler) {
+            if (!element) return;
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                handler(e);
+            });
+        }
+
+        bindAction(btnGenerate, generateExercises);
+        bindAction(btnReset, () => clearAll(true));
+        bindAction(btnVerify, verifyAnswers);
+
+        questionCountSelect.addEventListener('change', () => {
+            initGrid();
+            clearAll(true);
+        });
+
+        // Premier affichage explicite de la grille
+        initGrid();
+    });
+</script>
+
+</body>
+</html>
